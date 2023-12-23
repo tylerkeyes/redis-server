@@ -10,6 +10,7 @@ use tower_http::cors::CorsLayer;
 use crate::controllers::service_controller;
 
 mod controllers;
+mod data;
 
 #[tokio::main]
 async fn main() {
@@ -45,11 +46,6 @@ async fn main() {
     let bind_address = app_host + ":" + &app_port;
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
     axum::serve(listener, routes.into_make_service()).await.unwrap();
-    // axum::Server::bind(&bind_address.parse().unwrap())
-    //     .serve(routes.into_make_service())
-    //     .with_graceful_shutdown(shutdown_signal())
-    //     .await
-    //     .unwrap();
 }
 
 async fn shutdown_signal() {
