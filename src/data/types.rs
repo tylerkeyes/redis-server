@@ -28,6 +28,8 @@ pub struct Shared<T, U> {
 }
 
 // Option 3
+// Idea is to use this type as the generic type for all stored values.
+// This might end up not working.
 pub struct StoredType {
     pub simple_string: Option<String>, // simple string val
     pub next: Option<Box<StoredType>>, // value for map entry
