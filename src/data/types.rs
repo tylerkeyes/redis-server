@@ -58,4 +58,6 @@ impl StoredType {
             verbatim_encoding: None,
         }
     }
+
+    // TODO: Create functions to set each property
 }
