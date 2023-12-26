@@ -1,5 +1,7 @@
 // generic trait to share functionality between all stored data types
 
+use std::collections::HashMap;
+
 // Option 1
 pub trait StoredTypeTrait {
     fn add(&self);
@@ -27,9 +29,23 @@ pub struct Shared<T, U> {
     pub next: Option<U>,
 }
 
+// TODO: use to select what type of data is being stored
 enum StoredTypeKind {
     SimpleString(String),
     SimpleError(String),
+    Integer(isize),
+    BulkString(isize, String),         // length of string, value
+    Array(isize, Vec<StoredTypeKind>), // # of elements, list of objects
+    Null,
+    Boolean(bool),
+    Double(i64, u64), // whole number, decimal
+    BigNumber(String),
+    BulkError(isize, String),              // length of error, value
+    VerbatimString(isize, String, String), // size, encoding, value
+    Map(isize, HashMap<StoredTypeKind, StoredTypeKind>), // # of elements, map of object mappings
+    Set(isize, Vec<StoredTypeKind>), // # of elements, set of objects TODO: need to make sure this
+                                     // functions as a set
+    Push(isize, Vec<StoredTypeKind>),
 }
 
 // Option 3
