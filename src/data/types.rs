@@ -27,6 +27,11 @@ pub struct Shared<T, U> {
     pub next: Option<U>,
 }
 
+enum StoredTypeKind {
+    SimpleString(String),
+    SimpleError(String),
+}
+
 // Option 3
 // Idea is to use this type as the generic type for all stored values.
 // This might end up not working.
