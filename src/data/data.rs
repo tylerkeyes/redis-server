@@ -1,5 +1,4 @@
-use crate::data::types::Shared;
-use crate::data::types::StoredType;
+use crate::data::types::{Shared, StoredType, StoredTypeKind};
 
 use super::types::StoredSimpleString;
 
@@ -30,31 +29,24 @@ pub fn deserialize(data: &str) -> &str {
         _ => handle_simple_errors(characters),
     };
 
-    println!("{:?}", result);
-
     return "";
 }
 
-fn handle_simple_string(chars: Vec<char>) -> Shared<String, ()> {
-    return Shared {
-        value: chars.iter().collect(),
-        next: None,
-    };
+fn handle_simple_string(chars: Vec<char>) -> StoredTypeKind {
+    println!("handle simple string: {:?}", chars);
+    StoredTypeKind::SimpleString(chars.iter().collect())
 }
 
-fn handle_simple_errors(chars: Vec<char>) -> Shared<String, ()> {
-    return Shared {
-        value: chars.iter().collect(),
-        next: None,
-    };
+fn handle_simple_errors(chars: Vec<char>) -> StoredTypeKind {
+    println!("handle simple error: {:?}", chars);
+    StoredTypeKind::SimpleError(chars.iter().collect())
 }
 
-fn handle_integer(chars: Vec<char>) -> Shared<i64, ()> {
+fn handle_integer(chars: Vec<char>) -> StoredTypeKind {
     println!("handle integer: {:?}", chars);
 
     let mut number = String::from("");
     let mut i = 1;
-
     // handle optional sign of number
     let mut sign = 1;
     if *chars.get(i).unwrap() == '-' {
@@ -70,34 +62,41 @@ fn handle_integer(chars: Vec<char>) -> Shared<i64, ()> {
     }
 
     println!("number: {}", number);
-    let numeric = number.parse::<i64>().unwrap_or_default();
+    let numeric = number.parse::<isize>().unwrap_or_default();
     println!("numeric: {}", numeric);
     let result = numeric * sign;
     println!("handle_integer: {}", result);
-    Shared {
-        value: result,
-        next: None,
-    }
+    StoredTypeKind::Integer(result)
 }
 
-fn handle_bulk_string(chars: Vec<char>) {}
+fn handle_bulk_string(chars: Vec<char>) -> StoredTypeKind {
+    println!("handle bulk string: {:?}", chars);
+    let mut length = String::from("");
+    let mut i = 1;
+    while *chars.get(i).unwrap() != '\r' {
+        length.push(*chars.get(i).unwrap());
+        i += 1;
+    }
 
-fn handle_array(chars: Vec<char>) {}
+    StoredTypeKind::BulkString(0, "".to_string())
+}
 
-fn handle_null(chars: Vec<char>) {}
+fn handle_array(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_boolean(chars: Vec<char>) {}
+fn handle_null(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_double(chars: Vec<char>) {}
+fn handle_boolean(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_big_number(chars: Vec<char>) {}
+fn handle_double(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_bulk_error(chars: Vec<char>) {}
+fn handle_big_number(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_verbatim_string(chars: Vec<char>) {}
+fn handle_bulk_error(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_map(chars: Vec<char>) {}
+fn handle_verbatim_string(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_set(chars: Vec<char>) {}
+fn handle_map(chars: Vec<char>) -> StoredTypeKind {}
 
-fn handle_push(chars: Vec<char>) {}
+fn handle_set(chars: Vec<char>) -> StoredTypeKind {}
+
+fn handle_push(chars: Vec<char>) -> StoredTypeKind {}

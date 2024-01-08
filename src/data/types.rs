@@ -30,7 +30,7 @@ pub struct Shared<T, U> {
 }
 
 // TODO: use to select what type of data is being stored
-enum StoredTypeKind {
+pub enum StoredTypeKind {
     SimpleString(String),
     SimpleError(String),
     Integer(isize),
