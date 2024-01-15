@@ -47,7 +47,13 @@ fn handle_simple_string(chars: Vec<char>) -> StoredType {
 
 fn handle_simple_errors(chars: Vec<char>) -> StoredType {
     println!("handle simple error: {:?}", chars);
-    StoredType::SimpleError(chars.iter().collect())
+    let mut result = String::from("");
+    let mut i = 1;
+    while *chars.get(i).unwrap() != '\r' {
+        result.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+    StoredType::SimpleError(result)
 }
 
 fn handle_integer(chars: Vec<char>) -> StoredType {
@@ -69,16 +75,12 @@ fn handle_integer(chars: Vec<char>) -> StoredType {
         i += 1;
     }
 
-    println!("number: {}", number);
     let numeric = number.parse::<isize>().unwrap_or_default();
-    println!("numeric: {}", numeric);
     let result = numeric * sign;
-    println!("handle_integer: {}", result);
     StoredType::Integer(result)
 }
 
 fn handle_bulk_string(chars: Vec<char>) -> StoredType {
-    // TODO: finish
     println!("handle bulk string: {:?}", chars);
     let mut length = String::from("");
     let mut i = 1;
@@ -86,7 +88,6 @@ fn handle_bulk_string(chars: Vec<char>) -> StoredType {
         length.push(*chars.get(i).unwrap());
         i += 1;
     }
-    println!("bulk string length: {}", length);
     
     i += 2; // move counter
     let mut data = String::from("");
@@ -94,9 +95,8 @@ fn handle_bulk_string(chars: Vec<char>) -> StoredType {
         data.push(*chars.get(i).unwrap());
         i += 1;
     }
-    println!("bulk string data: {}", data);
 
-    StoredType::BulkString(0, "".to_string())
+    StoredType::BulkString(length.parse::<isize>().unwrap(), data)
 }
 
 fn handle_array(chars: Vec<char>) -> StoredType {
