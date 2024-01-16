@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use crate::data::types::{StoredType};
-
+use crate::data::types::StoredType;
 
 // TODO: need to pass 'redis' data, then serialize to string format
 pub fn serialize(data: &str) -> &str {
@@ -84,11 +83,14 @@ fn handle_bulk_string(chars: Vec<char>) -> StoredType {
     println!("handle bulk string: {:?}", chars);
     let mut length = String::from("");
     let mut i = 1;
+    if *chars.get(i).unwrap() == '-' {
+        return StoredType::Null;
+    }
     while *chars.get(i).unwrap() != '\r' {
         length.push(*chars.get(i).unwrap());
         i += 1;
     }
-    
+
     i += 2; // move counter
     let mut data = String::from("");
     while *chars.get(i).unwrap() != '\r' {
@@ -100,6 +102,7 @@ fn handle_bulk_string(chars: Vec<char>) -> StoredType {
 }
 
 fn handle_array(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::Array(0, vec![])
 }
 
@@ -108,33 +111,45 @@ fn handle_null(chars: Vec<char>) -> StoredType {
 }
 
 fn handle_boolean(chars: Vec<char>) -> StoredType {
-    StoredType::Boolean(false)
+    let boolean = *chars.get(1).unwrap();
+    match boolean {
+        't' => StoredType::Boolean(true),
+        'f' => StoredType::Boolean(false),
+        _ => StoredType::Boolean(false),
+    }
 }
 
 fn handle_double(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::Double(0, 0)
 }
 
 fn handle_big_number(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::BigNumber(String::from("0"))
 }
 
 fn handle_bulk_error(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::BulkError(0, String::from(""))
 }
 
 fn handle_verbatim_string(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::VerbatimString(0, String::from("txt"), String::from(""))
 }
 
 fn handle_map(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::Map(0, HashMap::new())
 }
 
 fn handle_set(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::Set(0, vec![])
 }
 
 fn handle_push(chars: Vec<char>) -> StoredType {
+    // TODO: finish function
     StoredType::Push(0, vec![])
 }
