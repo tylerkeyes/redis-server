@@ -57,7 +57,6 @@ fn handle_simple_errors(chars: Vec<char>) -> StoredType {
 
 fn handle_integer(chars: Vec<char>) -> StoredType {
     println!("handle integer: {:?}", chars);
-
     let mut number = String::from("");
     let mut i = 1;
     // handle optional sign of number
@@ -68,12 +67,10 @@ fn handle_integer(chars: Vec<char>) -> StoredType {
     } else if *chars.get(i).unwrap() == '+' {
         i += 1;
     }
-
     while *chars.get(i).unwrap() != '\r' {
         number.push(*chars.get(i).unwrap());
         i += 1;
     }
-
     let numeric = number.parse::<isize>().unwrap_or_default();
     let result = numeric * sign;
     StoredType::Integer(result)
@@ -90,19 +87,20 @@ fn handle_bulk_string(chars: Vec<char>) -> StoredType {
         length.push(*chars.get(i).unwrap());
         i += 1;
     }
-
     i += 2; // move counter
     let mut data = String::from("");
     while *chars.get(i).unwrap() != '\r' {
         data.push(*chars.get(i).unwrap());
         i += 1;
     }
-
     StoredType::BulkString(length.parse::<isize>().unwrap(), data)
 }
 
 fn handle_array(chars: Vec<char>) -> StoredType {
     // TODO: finish function
+    println!("handle array: {:?}", chars);
+    let mut array: Vec<StoredType> = Vec::new();
+    let mut i = 1;
     StoredType::Array(0, vec![])
 }
 

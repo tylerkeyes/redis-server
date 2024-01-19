@@ -45,22 +45,24 @@ async fn main() {
 
     let bind_address = app_host + ":" + &app_port;
     let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
-    axum::serve(listener, routes.into_make_service()).await.unwrap();
+    axum::serve(listener, routes.into_make_service())
+        .await
+        .unwrap();
 }
 
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()
-        .await
-        .expect("failed to install Ctrl+C handler");
+            .await
+            .expect("failed to install Ctrl+C handler");
     };
 
     #[cfg(unix)]
     let terminate = async {
         signal::unix::signal(signal::unix::SignalKind::terminate())
-        .expect("failed to install signal handler")
-        .recv()
-        .await;
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
     };
 
     #[cfg(not(unix))]
