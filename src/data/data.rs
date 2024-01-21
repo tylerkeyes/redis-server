@@ -100,6 +100,7 @@ fn handle_array(chars: Vec<char>) -> StoredType {
     // TODO: finish function
     println!("handle array: {:?}", chars);
     let mut array: Vec<StoredType> = Vec::new();
+    let split_chars: String = chars.into_iter().collect();
     let mut i = 1;
     StoredType::Array(0, vec![])
 }
