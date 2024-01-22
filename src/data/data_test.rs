@@ -7,7 +7,11 @@ mod serialize_tests {
     // integer tests
     #[test]
     fn deserialize_integer() {
-        assert_eq!("", deserialize(":-10\r\n"));
+        let result = deserialize(":-10\r\n");
+        match result {
+            StoredType::Integer(x) => assert_eq!(-10, x),
+            _ => assert!(false),
+        }
     }
 
     // simple string tests
@@ -29,7 +33,6 @@ mod serialize_tests {
             _ => assert!(false),
         }
     }
-    */
 
     // bulk string tests
     #[test]
@@ -92,6 +95,26 @@ mod serialize_tests {
         let result = deserialize("#f\r\n");
         match result {
             StoredType::Boolean(x) => assert_eq!(false, x),
+            _ => assert!(false),
+        }
+    }
+    */
+
+    // array tests
+    #[test]
+    fn deserialize_array_empty() {
+        let result = deserialize("*0\r\n");
+        match result.1 {
+            StoredType::Array(x, y) => assert_eq!(0, x),
+            _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn deserialize_array_two_strings() {
+        let result = deserialize("*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n");
+        match result.1 {
+            StoredType::Array(x, y) => assert_eq!(2, x),
             _ => assert!(false),
         }
     }
