@@ -101,6 +101,25 @@ fn handle_bulk_string(chars: Vec<char>) -> (isize, StoredType) {
     )
 }
 
+fn split_array(array_str: String) -> Vec<String> {
+    /* Might be better to change this to parse out the first nested type,
+    *  then return two values: (parsed first type, remainder of input String).
+    *  
+    *  This would be a more iterative way of parsing the input String, instead
+    *  of going through the entire String at one time and returning a vector of
+    *  the parsed types. */
+    let mut result = Vec::new();
+    let dict = "+-:$*_#,(!=%~>";
+
+    for c in array_str.chars() {
+        if dict.contains(c) {
+            println!("type match");
+        }
+    }
+
+    return result;
+}
+
 fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
     // TODO: finish function
     println!("handle array: {:?}", chars);
@@ -108,7 +127,9 @@ fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
     let split_chars: String = chars.into_iter().collect();
 
     // TODO: splitting on '\r\n' doesn't work, need to fix
-    let values: Vec<String> = split_chars.split("\r\n").map(str::to_string).collect();
+    let values_tmp: Vec<String> = split_chars.split("\r\n").map(str::to_string).collect();
+    let values = split_array(split_chars);
+
 
     let length = values.get(0).unwrap()[1..].parse::<isize>().unwrap();
     for i in 1..values.len() {
