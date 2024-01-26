@@ -109,11 +109,15 @@ fn split_array(array_str: String) -> Vec<String> {
     *  of going through the entire String at one time and returning a vector of
     *  the parsed types. */
     let mut result = Vec::new();
-    let dict = "+-:$*_#,(!=%~>";
+    let simple_dict = "+-:$_#,(!=";
+    let complex_dict = "*%~>";
+    println!("in split array with value: {}", array_str);
 
     for c in array_str.chars() {
-        if dict.contains(c) {
-            println!("type match");
+        if simple_dict.contains(c) {
+            println!("type match: {}", c);
+        } else if complex_dict.contains(c) {
+            println!("complex type match: {}", c);
         }
     }
 

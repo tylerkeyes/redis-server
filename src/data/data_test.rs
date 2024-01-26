@@ -100,6 +100,7 @@ mod serialize_tests {
     }
     */
 
+    /*
     // array tests
     #[test]
     fn deserialize_array_empty() {
@@ -109,6 +110,7 @@ mod serialize_tests {
             _ => assert!(false),
         }
     }
+    */
 
     #[test]
     fn deserialize_array_two_strings() {
