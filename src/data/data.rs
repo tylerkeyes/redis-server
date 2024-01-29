@@ -1,3 +1,5 @@
+use log::{error, info};
+use regex::Regex;
 use std::collections::HashMap;
 
 use crate::data::types::StoredType;
@@ -103,11 +105,11 @@ fn handle_bulk_string(chars: Vec<char>) -> (isize, StoredType) {
 
 fn split_array(array_str: String) -> Vec<String> {
     /* Might be better to change this to parse out the first nested type,
-    *  then return two values: (parsed first type, remainder of input String).
-    *  
-    *  This would be a more iterative way of parsing the input String, instead
-    *  of going through the entire String at one time and returning a vector of
-    *  the parsed types. */
+     *  then return two values: (parsed first type, remainder of input String).
+     *
+     *  This would be a more iterative way of parsing the input String, instead
+     *  of going through the entire String at one time and returning a vector of
+     *  the parsed types. */
     let mut result = Vec::new();
     let simple_dict = "+-:$_#,(!=";
     let complex_dict = "*%~>";
@@ -130,12 +132,22 @@ fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
     let mut array: Vec<StoredType> = Vec::new();
     let split_chars: String = chars.into_iter().collect();
 
-    // TODO: splitting on '\r\n' doesn't work, need to fix
-    let values_tmp: Vec<String> = split_chars.split("\r\n").map(str::to_string).collect();
+    // capture length
+    let re_length = Regex::new(r"^*(\d+)\r\n").unwrap();
+    let Some(capture) = re_length.captures(&split_chars) else {
+        println!("error capturing length");
+        return (0, StoredType::Array(0, vec![]));
+    };
+    let arr_len: isize = (&capture[1]).parse::<isize>().unwrap();
+
+    // capture rest of string
+    let start_idx = split_chars.find("\r\n").unwrap() + 2;
+    let remaining = &split_chars[start_idx..];
+    println!("DEBUG: {}", remaining);
+
     let values = split_array(split_chars);
-
-
     let length = values.get(0).unwrap()[1..].parse::<isize>().unwrap();
+
     for i in 1..values.len() {
         if values.get(i).unwrap() != "" {
             println!("got value: {:?}", values.get(i));
@@ -147,7 +159,7 @@ fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
     }
     println!("array length: {}, array values: {:?}", length, array);
 
-    (0, StoredType::Array(length, array))
+    (length, StoredType::Array(arr_len, array))
 }
 
 fn handle_null(chars: Vec<char>) -> (isize, StoredType) {
