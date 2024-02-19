@@ -50,6 +50,7 @@ async fn main() {
         .unwrap();
 }
 
+#[allow(dead_code)]
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()

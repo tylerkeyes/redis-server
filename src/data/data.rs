@@ -1,19 +1,20 @@
-use log::{error, info};
 use regex::Regex;
 use std::collections::HashMap;
 
 use crate::data::types::StoredType;
 
 // TODO: need to pass 'redis' data, then serialize to string format
+#[allow(dead_code)]
 pub fn serialize(data: &str) -> &str {
     return "";
 }
 
-pub fn deserialize(data: &str) -> (isize, StoredType) {
+#[allow(dead_code)]
+pub fn deserialize(data: &str) -> (usize, StoredType) {
     let characters: Vec<char> = data.chars().collect();
     let char_type = characters.get(0).unwrap();
 
-    println!("deserialize: {:?}", data);
+    //println!("[DEBUG] deserialize: {:?}", data);
 
     let result = match char_type {
         '+' => handle_simple_string(characters),
@@ -37,30 +38,30 @@ pub fn deserialize(data: &str) -> (isize, StoredType) {
     (result.0, result.1)
 }
 
-fn handle_simple_string(chars: Vec<char>) -> (isize, StoredType) {
-    //println!("handle simple string: {:?}", chars);
+fn handle_simple_string(chars: Vec<char>) -> (usize, StoredType) {
+    //println!("[DEBUG] handle simple string: {:?}", chars);
     let mut result = String::from("");
     let mut i = 1;
     while *chars.get(i).unwrap() != '\r' {
         result.push(*chars.get(i).unwrap());
         i += 1;
     }
-    (i as isize, StoredType::SimpleString(result))
+    (i + 2, StoredType::SimpleString(result))
 }
 
-fn handle_simple_errors(chars: Vec<char>) -> (isize, StoredType) {
-    //println!("handle simple error: {:?}", chars);
+fn handle_simple_errors(chars: Vec<char>) -> (usize, StoredType) {
+    //println!("[DEBUG] handle simple error: {:?}", chars);
     let mut result = String::from("");
     let mut i = 1;
     while *chars.get(i).unwrap() != '\r' {
         result.push(*chars.get(i).unwrap());
         i += 1;
     }
-    (i as isize, StoredType::SimpleError(result))
+    (i + 2, StoredType::SimpleError(result))
 }
 
-fn handle_integer(chars: Vec<char>) -> (isize, StoredType) {
-    //println!("handle integer: {:?}", chars);
+fn handle_integer(chars: Vec<char>) -> (usize, StoredType) {
+    //println!("[DEBUG] handle integer: {:?}", chars);
     let mut number = String::from("");
     let mut i = 1;
     // handle optional sign of number
@@ -77,11 +78,11 @@ fn handle_integer(chars: Vec<char>) -> (isize, StoredType) {
     }
     let numeric = number.parse::<isize>().unwrap_or_default();
     let result = numeric * sign;
-    (i as isize, StoredType::Integer(result))
+    (i + 2, StoredType::Integer(result))
 }
 
-fn handle_bulk_string(chars: Vec<char>) -> (isize, StoredType) {
-    //println!("handle bulk string: {:?}", chars);
+fn handle_bulk_string(chars: Vec<char>) -> (usize, StoredType) {
+    //println!("[DEBUG] handle bulk string: {:?}", chars);
     let mut length = String::from("");
     let mut i = 1;
     if *chars.get(i).unwrap() == '-' {
@@ -98,39 +99,21 @@ fn handle_bulk_string(chars: Vec<char>) -> (isize, StoredType) {
         i += 1;
     }
     (
-        i as isize,
+        i + 2,
         StoredType::BulkString(length.parse::<isize>().unwrap(), data),
     )
 }
 
-fn split_array(array_str: String) -> Vec<String> {
-    /* Might be better to change this to parse out the first nested type,
-     *  then return two values: (parsed first type, remainder of input String).
-     *
-     *  This would be a more iterative way of parsing the input String, instead
-     *  of going through the entire String at one time and returning a vector of
-     *  the parsed types. */
-    let mut result = Vec::new();
-    let simple_dict = "+-:$_#,(!=";
-    let complex_dict = "*%~>";
-    println!("in split array with value: {}", array_str);
-
-    for c in array_str.chars() {
-        if simple_dict.contains(c) {
-            println!("type match: {}", c);
-        } else if complex_dict.contains(c) {
-            println!("complex type match: {}", c);
-        }
-    }
-
-    return result;
-}
-
-fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
-    // TODO: finish function
-    println!("handle array: {:?}", chars);
+fn handle_array(chars: Vec<char>) -> (usize, StoredType) {
+    //println!("[DEBUG] handle array: {:?}", chars);
     let mut array: Vec<StoredType> = Vec::new();
     let split_chars: String = chars.into_iter().collect();
+    if split_chars == "*-1\r\n" {
+        return (5, StoredType::Array(-1, array));
+    }
+
+    // start calculating character length of array
+    let mut char_len = 0;
 
     // capture length
     let re_length = Regex::new(r"^*(\d+)\r\n").unwrap();
@@ -138,35 +121,33 @@ fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
         println!("error capturing length");
         return (0, StoredType::Array(0, vec![]));
     };
-    let arr_len: isize = (&capture[1]).parse::<isize>().unwrap();
+    let arr_len: usize = (&capture[1]).parse::<usize>().unwrap();
+    let tmp_len_str = arr_len.to_string();
+    char_len += tmp_len_str.len() + 3;
 
-    // capture rest of string
-    let start_idx = split_chars.find("\r\n").unwrap() + 2;
-    let remaining = &split_chars[start_idx..];
-    println!("DEBUG: {}", remaining);
+    // mark start of substring
+    let mut start_idx = split_chars.find("\r\n").unwrap() + 2;
 
-    let values = split_array(split_chars);
-    let length = values.get(0).unwrap()[1..].parse::<isize>().unwrap();
+    for _ in 0..arr_len {
+        let remaining = &split_chars[start_idx..];
+        let curr_val = deserialize(remaining);
 
-    for i in 1..values.len() {
-        if values.get(i).unwrap() != "" {
-            println!("got value: {:?}", values.get(i));
-            let pass_val = format!("{}{}", values.get(i).unwrap().as_str(), "\r\n");
-            println!("temp result: {:?}", pass_val);
-            let deserialized_val = deserialize(&pass_val);
-            array.push(deserialized_val.1);
-        }
+        // update 'remaining' var
+        start_idx += curr_val.0;
+        array.push(curr_val.1);
+        char_len += curr_val.0;
     }
-    println!("array length: {}, array values: {:?}", length, array);
 
-    (length, StoredType::Array(arr_len, array))
+    (char_len, StoredType::Array(arr_len as isize, array))
 }
 
-fn handle_null(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_null(_chars: Vec<char>) -> (usize, StoredType) {
+    //println!("[DEBUG] handle null: {:?}", chars);
     (3, StoredType::Null)
 }
 
-fn handle_boolean(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_boolean(chars: Vec<char>) -> (usize, StoredType) {
+    //println!("[DEBUG] handle boolean: {:?}", chars);
     let boolean = *chars.get(1).unwrap(); // #<t|f>\r\n
     match boolean {
         't' => (4, StoredType::Boolean(true)),
@@ -175,40 +156,103 @@ fn handle_boolean(chars: Vec<char>) -> (isize, StoredType) {
     }
 }
 
-fn handle_double(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
     // TODO: finish function
-    (0, StoredType::Double(0, 0))
+    println!("\n\n[DEBUG] handle double: {:?}", chars);
+    let mut number = String::from("");
+    let mut i = 1;
+    // handle optional sign of number
+    let mut sign = 1;
+    if *chars.get(i).unwrap() == '-' {
+        sign = -1;
+        i += 1;
+    } else if *chars.get(i).unwrap() == '+' {
+        i += 1;
+    }
+
+    while *chars.get(i).unwrap() != '\r' {
+        number.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+
+    let mut whole_fraction = Vec::new();
+    for part in number.split('.') {
+        whole_fraction.push(part);
+    }
+    println!("[DEBUG] here: {:?}", whole_fraction);
+
+    let mut whole_num = 0;
+    if !whole_fraction.get(0).unwrap().contains('e')
+        && !whole_fraction.get(0).unwrap().contains('E')
+    {
+        whole_num = whole_fraction.get(0).unwrap().parse::<isize>().unwrap();
+    }
+    println!("[DEBUG] whole fraction: {}", whole_num);
+
+    let mut frac_num = 0;
+    let mut exp_num = 0;
+    if whole_fraction.len() > 1 {
+        let mut fraction_split = Vec::new();
+        let test = whole_fraction.get(1).unwrap().to_lowercase();
+        for part in test.split('e') {
+            fraction_split.push(part);
+        }
+        println!("[DEBUG] fraction vector: {:?}", &fraction_split);
+        frac_num = fraction_split.get(0).unwrap().parse::<usize>().unwrap();
+        if fraction_split.len() > 1 {
+            exp_num = fraction_split.get(1).unwrap().parse::<isize>().unwrap();
+        }
+    } else {
+        let mut exp_split = Vec::new();
+        let test = whole_fraction.get(0).unwrap().to_lowercase();
+        for part in test.split('e') {
+            exp_split.push(part);
+        }
+        println!("[DEBUG] exponent vector: {:?}", &exp_split);
+        whole_num = exp_split.get(0).unwrap().parse::<isize>().unwrap();
+        if exp_split.len() > 1 {
+            exp_num = exp_split.get(1).unwrap().parse::<isize>().unwrap();
+        }
+    }
+
+    (0, StoredType::Double(whole_num * sign, frac_num, exp_num))
 }
 
-fn handle_big_number(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_big_number(chars: Vec<char>) -> (usize, StoredType) {
     // TODO: finish function
+    //println!("[DEBUG] handle big number: {:?}", chars);
     (0, StoredType::BigNumber(String::from("0")))
 }
 
-fn handle_bulk_error(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_bulk_error(chars: Vec<char>) -> (usize, StoredType) {
     // TODO: finish function
+    //println!("[DEBUG] handle bulk error: {:?}", chars);
     (0, StoredType::BulkError(0, String::from("")))
 }
 
-fn handle_verbatim_string(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_verbatim_string(chars: Vec<char>) -> (usize, StoredType) {
     // TODO: finish function
+    //println!("[DEBUG] handle verbatim string: {:?}", chars);
     (
         0,
         StoredType::VerbatimString(0, String::from("txt"), String::from("")),
     )
 }
 
-fn handle_map(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_map(chars: Vec<char>) -> (usize, StoredType) {
     // TODO: finish function
+    //println!("[DEBUG] handle map: {:?}", chars);
     (0, StoredType::Map(0, HashMap::new()))
 }
 
-fn handle_set(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_set(chars: Vec<char>) -> (usize, StoredType) {
     // TODO: finish function
+    //println!("[DEBUG] handle set: {:?}", chars);
     (0, StoredType::Set(0, vec![]))
 }
 
-fn handle_push(chars: Vec<char>) -> (isize, StoredType) {
+fn handle_push(chars: Vec<char>) -> (usize, StoredType) {
     // TODO: finish function
+    //println!("[DEBUG] handle push: {:?}", chars);
     (0, StoredType::Push(0, vec![]))
 }

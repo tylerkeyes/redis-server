@@ -12,7 +12,7 @@ pub enum StoredType {
     Array(isize, Vec<StoredType>), // # of elements, list of objects
     Null,
     Boolean(bool),
-    Double(i64, u64), // whole number, decimal
+    Double(isize, usize, isize), // whole number, decimal, exponent
     BigNumber(String),
     BulkError(isize, String),              // length of error, value
     VerbatimString(isize, String, String), // size, encoding, value
