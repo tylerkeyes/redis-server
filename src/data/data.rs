@@ -123,7 +123,7 @@ fn split_array(array_str: String) -> Vec<String> {
         }
     }
 
-    return result;
+    result
 }
 
 fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
@@ -143,11 +143,14 @@ fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
     // capture rest of string
     let start_idx = split_chars.find("\r\n").unwrap() + 2;
     let remaining = &split_chars[start_idx..];
-    println!("DEBUG: {}", remaining);
+    println!("DEBUG remaining: {}", remaining);
 
-    let values = split_array(split_chars);
+    let values = split_array(split_chars); // TODO: values in returning an empty vec, causing
+                                           // unwrap to fail
     let length = values.get(0).unwrap()[1..].parse::<isize>().unwrap();
+    println!("DEBUG length: {}", length);
 
+    /*
     for i in 1..values.len() {
         if values.get(i).unwrap() != "" {
             println!("got value: {:?}", values.get(i));
@@ -157,6 +160,7 @@ fn handle_array(chars: Vec<char>) -> (isize, StoredType) {
             array.push(deserialized_val.1);
         }
     }
+    */
     println!("array length: {}, array values: {:?}", length, array);
 
     (length, StoredType::Array(arr_len, array))

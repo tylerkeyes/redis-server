@@ -3,7 +3,7 @@ use dotenv::dotenv;
 use hyper::Method;
 use log::info;
 use std::env;
-use tokio::signal;
+//use tokio::signal;
 use tower_http::cors::Any;
 use tower_http::cors::CorsLayer;
 
@@ -50,6 +50,7 @@ async fn main() {
         .unwrap();
 }
 
+/*
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()
@@ -75,3 +76,4 @@ async fn shutdown_signal() {
 
     info!("signal received, shutting down");
 }
+*/
