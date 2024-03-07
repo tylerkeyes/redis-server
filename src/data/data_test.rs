@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod serialize_tests {
 
-    use log::warn;
+    //use log::warn;
 
     use crate::data::{data::deserialize, types::StoredType};
 
@@ -100,7 +100,7 @@ mod serialize_tests {
             _ => assert!(false),
         }
     }
-    
+
     // array tests
     #[test]
     fn deserialize_array_empty() {
@@ -128,7 +128,7 @@ mod serialize_tests {
             _ => assert!(false),
         }
     }
-    
+
     #[test]
     fn deserialize_complex_array() {
         let result = deserialize("*3\r\n:4\r\n*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n+OK\r\n");
@@ -137,9 +137,7 @@ mod serialize_tests {
             _ => assert!(false),
         }
     }
-    */
 
-    /*
     // double tests
     #[test]
     fn deserialize_double_default() {
@@ -149,27 +147,37 @@ mod serialize_tests {
                 if x != 1 || y != 23 || z != 0 {
                     panic!("double was not empty")
                 }
-            },
+            }
             _ => assert!(false),
         }
     }
-    */
 
     #[test]
     fn deserialize_double_exp() {
         let result = deserialize(",1E+2\r\n");
         match result.1 {
             StoredType::Double(x, y, z) => {
-                println!("{}, {}, {}", x, y, x);
-                if x != 1 || y != 0 || z != -2 {
+                if x != 1 || y != 0 || z != 2 {
                     panic!("double was not empty")
                 }
-            },
+            }
             _ => assert!(false),
         }
     }
-    
-    /*
+
+    #[test]
+    fn deserialize_double_exp_neg() {
+        let result = deserialize(",1E-2\r\n");
+        match result.1 {
+            StoredType::Double(x, y, z) => {
+                if x != 1 || y != 0 || z != -2 {
+                    panic!("double was not empty")
+                }
+            }
+            _ => assert!(false),
+        }
+    }
+
     #[test]
     fn deserialize_double_all() {
         let result = deserialize(",1.23E-2\r\n");
@@ -178,7 +186,7 @@ mod serialize_tests {
                 if x != 1 || y != 23 || z != -2 {
                     panic!("double was not empty")
                 }
-            },
+            }
             _ => assert!(false),
         }
     }
@@ -191,9 +199,69 @@ mod serialize_tests {
                 if x != 1 || y != 0 || z != 0 {
                     panic!("double was not empty")
                 }
-            },
+            }
+            _ => assert!(false),
+        }
+    }
+
+    // big number tests
+    #[test]
+    fn deserialize_big_number() {
+        let result = deserialize("(3492890328409238509324850943850943825024385\r\n");
+        match result.1 {
+            StoredType::BigNumber(x) => {
+                assert_eq!("3492890328409238509324850943850943825024385", x)
+            }
+            _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn deserialize_big_number_neg() {
+        let result = deserialize("(-3492890328409238509324850943850943825024385\r\n");
+        match result.1 {
+            StoredType::BigNumber(x) => {
+                assert_eq!("-3492890328409238509324850943850943825024385", x)
+            }
+            _ => assert!(false),
+        }
+    }
+    #[test]
+    fn deserialize_big_number_pos() {
+        let result = deserialize("(+3492890328409238509324850943850943825024385\r\n");
+        match result.1 {
+            StoredType::BigNumber(x) => {
+                assert_eq!("3492890328409238509324850943850943825024385", x)
+            }
+            _ => assert!(false),
+        }
+    }
+
+    // bulk error tests
+    #[test]
+    fn deserialize_bulk_error() {
+        let result = deserialize("!21\r\nSYNTAX invalid syntax\r\n");
+        match result.1 {
+            StoredType::BulkError(x, y) => {
+                if x != 21 || "SYNTAX invalid syntax" != y {
+                    panic!("bulk error was not equal")
+                }
+            }
             _ => assert!(false),
         }
     }
     */
+
+    #[test]
+    fn deserialize_verbatim_string() {
+        let result = deserialize("=15\r\ntxt:Some string\r\n");
+        match result.1 {
+            StoredType::VerbatimString(len, encoding, data) => {
+                if 15 != len || "txt" != encoding || "Some string" != data {
+                    panic!("verbatim string was not equal")
+                }
+            }
+            _ => assert!(false),
+        }
+    }
 }

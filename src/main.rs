@@ -51,9 +51,7 @@ async fn main() {
 }
 
 /*
-=======
 #[allow(dead_code)]
->>>>>>> 3217df83c70523edce8d4ea445a2e3cb7fcd54d4
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()

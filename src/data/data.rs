@@ -157,8 +157,7 @@ fn handle_boolean(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
-    // TODO: finish function
-    println!("\n\n[DEBUG] handle double: {:?}", chars);
+    //println!("\n\n[DEBUG] handle double: {:?}", chars);
     let mut number = String::from("");
     let mut i = 1;
     // handle optional sign of number
@@ -179,7 +178,6 @@ fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
     for part in number.split('.') {
         whole_fraction.push(part);
     }
-    println!("[DEBUG] here: {:?}", whole_fraction);
 
     let mut whole_num = 0;
     if !whole_fraction.get(0).unwrap().contains('e')
@@ -187,7 +185,6 @@ fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
     {
         whole_num = whole_fraction.get(0).unwrap().parse::<isize>().unwrap();
     }
-    println!("[DEBUG] whole fraction: {}", whole_num);
 
     let mut frac_num = 0;
     let mut exp_num = 0;
@@ -197,7 +194,6 @@ fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
         for part in test.split('e') {
             fraction_split.push(part);
         }
-        println!("[DEBUG] fraction vector: {:?}", &fraction_split);
         frac_num = fraction_split.get(0).unwrap().parse::<usize>().unwrap();
         if fraction_split.len() > 1 {
             exp_num = fraction_split.get(1).unwrap().parse::<isize>().unwrap();
@@ -208,10 +204,23 @@ fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
         for part in test.split('e') {
             exp_split.push(part);
         }
-        println!("[DEBUG] exponent vector: {:?}", &exp_split);
         whole_num = exp_split.get(0).unwrap().parse::<isize>().unwrap();
         if exp_split.len() > 1 {
-            exp_num = exp_split.get(1).unwrap().parse::<isize>().unwrap();
+            let exp_num_str = *exp_split.get(1).unwrap();
+            let exp_chars: Vec<char> = exp_num_str.chars().collect();
+            if exp_chars[0] == '+' {
+                let mut collected_exp_str = Vec::new();
+                for i in 1..exp_chars.len() {
+                    collected_exp_str.push(*exp_chars.get(i).unwrap());
+                }
+                exp_num = collected_exp_str
+                    .iter()
+                    .collect::<String>()
+                    .parse::<isize>()
+                    .unwrap();
+            } else {
+                exp_num = exp_split.get(1).unwrap().parse::<isize>().unwrap();
+            }
         }
     }
 
@@ -219,23 +228,73 @@ fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_big_number(chars: Vec<char>) -> (usize, StoredType) {
-    // TODO: finish function
     //println!("[DEBUG] handle big number: {:?}", chars);
-    (0, StoredType::BigNumber(String::from("0")))
+    let mut number = String::from("");
+    let mut i = 1;
+    let mut skipped = 3; // count skipped chars - leader, ending 2
+
+    // skip '+' character if included
+    if *chars.get(1).unwrap() == '+' {
+        i += 1;
+        skipped += 1;
+    }
+
+    while *chars.get(i).unwrap() != '\r' {
+        number.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+    let len = number.len() + skipped;
+
+    (len, StoredType::BigNumber(number))
 }
 
 fn handle_bulk_error(chars: Vec<char>) -> (usize, StoredType) {
-    // TODO: finish function
     //println!("[DEBUG] handle bulk error: {:?}", chars);
-    (0, StoredType::BulkError(0, String::from("")))
+    let mut length = String::from("");
+    let mut i = 1;
+    while *chars.get(i).unwrap() != '\r' {
+        length.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+    i += 2; // move counter past '\r\n'
+
+    let mut data = String::from("");
+    while *chars.get(i).unwrap() != '\r' {
+        data.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+    (
+        i + 2,
+        StoredType::BulkError(length.parse::<isize>().unwrap(), data),
+    )
 }
 
 fn handle_verbatim_string(chars: Vec<char>) -> (usize, StoredType) {
-    // TODO: finish function
     //println!("[DEBUG] handle verbatim string: {:?}", chars);
+    let mut length = String::from("");
+    let mut i = 1;
+    while *chars.get(i).unwrap() != '\r' {
+        length.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+    i += 2; // move counter past '\r\n'
+
+    let mut encoding = String::from("");
+    while *chars.get(i).unwrap() != ':' {
+        encoding.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+    i += 1; // move counter past ':'
+
+    let mut data = String::from("");
+    while *chars.get(i).unwrap() != '\r' {
+        data.push(*chars.get(i).unwrap());
+        i += 1;
+    }
+
     (
-        0,
-        StoredType::VerbatimString(0, String::from("txt"), String::from("")),
+        i + 2,
+        StoredType::VerbatimString(length.parse::<isize>().unwrap(), encoding, data),
     )
 }
 
