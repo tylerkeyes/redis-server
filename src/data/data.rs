@@ -1,12 +1,84 @@
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::data::types::StoredType;
 
 // TODO: need to pass 'redis' data, then serialize to string format
 #[allow(dead_code)]
-pub fn serialize(data: &str) -> &str {
-    return "";
+pub fn serialize(data: &StoredType) -> String {
+    println!("serialize: {:?}", data);
+    match data {
+        StoredType::SimpleString(..) => serialize_simple_string(data),
+        StoredType::SimpleError(..) => serialize_simple_error(data),
+        StoredType::Integer(..) => serialize_integer(data),
+        StoredType::BulkString(..) => serialize_bulk_string(data),
+        StoredType::Array(..) => serialize_array(data),
+        StoredType::Null => serialize_null(data),
+        StoredType::Boolean(..) => serialize_boolean(data),
+        StoredType::Double(..) => serialize_double(data),
+        StoredType::BigNumber(..) => serialize_big_number(data),
+        StoredType::BulkError(..) => serialize_bulk_error(data),
+        StoredType::VerbatimString(..) => serialize_verbatim_string(data),
+        StoredType::Map(..) => serialize_map(data),
+        StoredType::Set(..) => serialize_set(data),
+        StoredType::Push(..) => serialize_push(data),
+    }
+}
+
+fn serialize_simple_string(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_simple_error(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_integer(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_bulk_string(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_array(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_null(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_boolean(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_double(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_big_number(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_bulk_error(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_verbatim_string(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_map(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_set(data: &StoredType) -> String {
+    String::from("")
+}
+
+fn serialize_push(data: &StoredType) -> String {
+    String::from("")
 }
 
 #[allow(dead_code)]
@@ -194,7 +266,7 @@ fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
         for part in test.split('e') {
             fraction_split.push(part);
         }
-        frac_num = fraction_split.get(0).unwrap().parse::<usize>().unwrap();
+        frac_num = fraction_split.get(0).unwrap().parse::<isize>().unwrap();
         if fraction_split.len() > 1 {
             exp_num = fraction_split.get(1).unwrap().parse::<isize>().unwrap();
         }
@@ -299,19 +371,81 @@ fn handle_verbatim_string(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_map(chars: Vec<char>) -> (usize, StoredType) {
-    // TODO: finish function
     //println!("[DEBUG] handle map: {:?}", chars);
-    (0, StoredType::Map(0, HashMap::new()))
+    let mut value_map = HashMap::new();
+    let split_chars: String = (&chars).into_iter().collect();
+
+    // calculate element length of map
+    let mut char_len = 1;
+    let mut len_str = String::from("");
+
+    while *chars.get(char_len).unwrap() != '\r' {
+        len_str.push(*chars.get(char_len).unwrap());
+        char_len += 1;
+    }
+    char_len += 2;
+    let map_len = len_str.parse::<isize>().unwrap();
+
+    for _ in 0..map_len {
+        let remaining = &split_chars[char_len..];
+        let key_result = deserialize(&remaining);
+        char_len += key_result.0;
+
+        let remaining = &split_chars[char_len..];
+        let value_result = deserialize(&remaining);
+        char_len += value_result.0;
+
+        value_map.insert(key_result.1, value_result.1);
+    }
+
+    (char_len, StoredType::Map(map_len, value_map))
 }
 
 fn handle_set(chars: Vec<char>) -> (usize, StoredType) {
-    // TODO: finish function
     //println!("[DEBUG] handle set: {:?}", chars);
-    (0, StoredType::Set(0, vec![]))
+    let mut set: HashSet<StoredType> = HashSet::new();
+    let split_chars: String = (&chars).into_iter().collect();
+
+    let mut char_len = 1;
+    let mut len_str = String::from("");
+
+    while *chars.get(char_len).unwrap() != '\r' {
+        len_str.push(*chars.get(char_len).unwrap());
+        char_len += 1;
+    }
+    char_len += 2; // move past separator character
+    let set_len = len_str.parse::<isize>().unwrap();
+
+    for _ in 0..set_len {
+        let remaining = &split_chars[char_len..];
+        let value_res = deserialize(&remaining);
+        char_len += value_res.0;
+        set.insert(value_res.1);
+    }
+
+    (char_len, StoredType::Set(set_len, set))
 }
 
 fn handle_push(chars: Vec<char>) -> (usize, StoredType) {
-    // TODO: finish function
     //println!("[DEBUG] handle push: {:?}", chars);
-    (0, StoredType::Push(0, vec![]))
+    let mut push_vec: Vec<StoredType> = Vec::new();
+    let mut char_len = 1;
+    let mut len_str = String::from("");
+    let char_str: String = (&chars).into_iter().collect();
+
+    while *chars.get(char_len).unwrap() != '\r' {
+        len_str.push(*chars.get(char_len).unwrap());
+        char_len += 1;
+    }
+    char_len += 2; // move past separator characters
+    let push_len = len_str.parse::<isize>().unwrap();
+
+    for _ in 0..push_len {
+        let remaining = &char_str[char_len..];
+        let result = deserialize(remaining);
+        char_len += result.0;
+        push_vec.push(result.1);
+    }
+
+    (char_len, StoredType::Push(push_len, push_vec))
 }

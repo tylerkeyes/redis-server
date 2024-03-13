@@ -5,7 +5,6 @@ mod serialize_tests {
 
     use crate::data::{data::deserialize, types::StoredType};
 
-    /*
     // integer tests
     #[test]
     fn deserialize_integer() {
@@ -250,8 +249,8 @@ mod serialize_tests {
             _ => assert!(false),
         }
     }
-    */
 
+    // verbatim string tests
     #[test]
     fn deserialize_verbatim_string() {
         let result = deserialize("=15\r\ntxt:Some string\r\n");
@@ -261,6 +260,45 @@ mod serialize_tests {
                     panic!("verbatim string was not equal")
                 }
             }
+            _ => assert!(false),
+        }
+    }
+
+    // map tests
+    #[test]
+    fn deserialize_map_basic() {
+        let result = deserialize("%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n");
+        match result.1 {
+            StoredType::Map(size, map) => assert_eq!(2, size),
+            _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn deserialize_map_empty() {
+        let result = deserialize("%0\r\n");
+        match result.1 {
+            StoredType::Map(size, map) => assert_eq!(0, size),
+            _ => assert!(false),
+        }
+    }
+
+    // set tests
+    #[test]
+    fn deserialize_set_basic() {
+        let result = deserialize("~2\r\n+first\r\n:1\r\n");
+        match result.1 {
+            StoredType::Set(size, set) => assert_eq!(2, size),
+            _ => assert!(false),
+        }
+    }
+
+    // push tests
+    #[test]
+    fn deserialize_push_basic() {
+        let result = deserialize(">2\r\n+first\r\n:1\r\n");
+        match result.1 {
+            StoredType::Push(size, set) => assert_eq!(2, size),
             _ => assert!(false),
         }
     }
