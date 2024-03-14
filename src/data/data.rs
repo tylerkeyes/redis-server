@@ -26,59 +26,94 @@ pub fn serialize(data: &StoredType) -> String {
 }
 
 fn serialize_simple_string(data: &StoredType) -> String {
-    String::from("")
+    let mut serialized = "+".to_string();
+
+    let val = match data {
+        StoredType::SimpleString(x) => x.to_string(),
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized.push_str("\r\n");
+
+    serialized
 }
 
 fn serialize_simple_error(data: &StoredType) -> String {
-    String::from("")
+    let mut serialized = "-".to_string();
+    let val = match data {
+        StoredType::SimpleError(x) => x.to_string(),
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized.push_str("\r\n");
+    serialized
 }
 
 fn serialize_integer(data: &StoredType) -> String {
-    String::from("")
+    let mut serialized = ":".to_string();
+    let val = match data {
+        StoredType::Integer(x) => x.to_string(),
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized.push_str("\r\n");
+    serialized
 }
 
 fn serialize_bulk_string(data: &StoredType) -> String {
-    String::from("")
+    let mut serialized = "$".to_string();
+    let val = match data {
+        StoredType::BulkString(size, str) => {
+            let mut val_str = (*size).to_string();
+            val_str.push_str("\r\n");
+            val_str.push_str(&str);
+            val_str.push_str("\r\n");
+            val_str
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 fn serialize_array(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_null(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_boolean(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_double(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_big_number(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_bulk_error(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_verbatim_string(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_map(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_set(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 fn serialize_push(data: &StoredType) -> String {
-    String::from("")
+    "".to_string()
 }
 
 #[allow(dead_code)]

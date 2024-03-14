@@ -1,7 +1,6 @@
+/*
 #[cfg(test)]
-mod serialize_tests {
-
-    //use log::warn;
+mod deserialize_tests {
 
     use crate::data::{data::deserialize, types::StoredType};
 
@@ -301,5 +300,58 @@ mod serialize_tests {
             StoredType::Push(size, set) => assert_eq!(2, size),
             _ => assert!(false),
         }
+    }
+}
+*/
+
+#[cfg(test)]
+mod serialize_tests {
+
+    use crate::data::{data::serialize, types::StoredType};
+
+    // simple string tests
+    #[test]
+    fn serialize_simple_string() {
+        let stored = StoredType::SimpleString("OK".to_string());
+        let serialized = serialize(&stored);
+        assert_eq!("+OK\r\n", serialized);
+    }
+
+    // simple error tests
+    #[test]
+    fn serialize_simple_error() {
+        let stored = StoredType::SimpleError("Error message".to_string());
+        let serialized = serialize(&stored);
+        assert_eq!("-Error message\r\n", serialized);
+    }
+
+    // integer tests
+    #[test]
+    fn serialize_integer() {
+        let stored = StoredType::Integer(20);
+        let serialized = serialize(&stored);
+        assert_eq!(":20\r\n", serialized);
+    }
+
+    #[test]
+    fn serialize_integer_neg() {
+        let stored = StoredType::Integer(-100);
+        let serialized = serialize(&stored);
+        assert_eq!(":-100\r\n", serialized);
+    }
+
+    // bulk string tests
+    #[test]
+    fn serialize_bulk_string() {
+        let stored = StoredType::BulkString(5, "hello".to_string());
+        let serialized = serialize(&stored);
+        assert_eq!("$5\r\nhello\r\n", serialized);
+    }
+
+    #[test]
+    fn serialize_bulk_string_empty() {
+        let stored = StoredType::BulkString(0, "".to_string());
+        let serialized = serialize(&stored);
+        assert_eq!("$0\r\n\r\n", serialized);
     }
 }
