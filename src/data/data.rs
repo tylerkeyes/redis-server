@@ -77,35 +77,136 @@ fn serialize_bulk_string(data: &StoredType) -> String {
 }
 
 fn serialize_array(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "*".to_string();
+    let val = match data {
+        StoredType::Array(size, arr) => {
+            let mut val_str = (*size).to_string();
+            val_str.push_str("\r\n");
+            for item in arr {
+                let stored_str = serialize(item);
+                val_str.push_str(&stored_str); // assume each serialized StoredType should close
+                                               // itsself, add ending "\r\n"
+            }
+            val_str
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 fn serialize_null(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "_".to_string();
+    let val = match data {
+        StoredType::Null => "\r\n".to_string(),
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 fn serialize_boolean(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "#".to_string();
+    let val = match data {
+        StoredType::Boolean(bool) => {
+            if *bool {
+                "t".to_string()
+            } else {
+                "f".to_string()
+            }
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized.push_str("\r\n");
+    serialized
 }
 
 fn serialize_double(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = ",".to_string();
+    let val = match data {
+        StoredType::Double(num, frac, exp) => {
+            let mut double_val = num.to_string();
+            if *frac != 0 {
+                double_val.push_str(".");
+                double_val.push_str(&frac.to_string());
+            }
+            if *exp != 0 {
+                double_val.push_str("e");
+                double_val.push_str(&exp.to_string());
+            }
+            double_val
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized.push_str("\r\n");
+    serialized
 }
 
 fn serialize_big_number(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "(".to_string();
+    let val = match data {
+        StoredType::BigNumber(num) => num.to_string(),
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized.push_str("\r\n");
+    serialized
 }
 
 fn serialize_bulk_error(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "!".to_string();
+    let val = match data {
+        StoredType::BulkError(size, str) => {
+            let mut err_str = size.to_string();
+            err_str.push_str("\r\n");
+            err_str.push_str(str);
+            err_str.push_str("\r\n");
+            err_str
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 fn serialize_verbatim_string(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "=".to_string();
+    let val = match data {
+        StoredType::VerbatimString(size, code, str) => {
+            let mut verbatim = size.to_string();
+            verbatim.push_str("\r\n");
+            verbatim.push_str(code);
+            verbatim.push_str(":");
+            verbatim.push_str(str);
+            verbatim.push_str("\r\n");
+            verbatim
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 fn serialize_map(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "%".to_string();
+    let val = match data {
+        StoredType::Map(size, map) => {
+            let mut map_str = size.to_string();
+            map_str.push_str("\r\n");
+            for (key, value) in map {
+                let key_str = serialize(key);
+                map_str.push_str(&key_str);
+                let val_str = serialize(value);
+                map_str.push_str(&val_str);
+            }
+            map_str
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 fn serialize_set(data: &StoredType) -> String {
