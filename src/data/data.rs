@@ -3,10 +3,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::data::types::StoredType;
 
-// TODO: need to pass 'redis' data, then serialize to string format
 #[allow(dead_code)]
 pub fn serialize(data: &StoredType) -> String {
-    println!("serialize: {:?}", data);
     match data {
         StoredType::SimpleString(..) => serialize_simple_string(data),
         StoredType::SimpleError(..) => serialize_simple_error(data),
@@ -210,19 +208,45 @@ fn serialize_map(data: &StoredType) -> String {
 }
 
 fn serialize_set(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = "~".to_string();
+    let val = match data {
+        StoredType::Set(size, set) => {
+            let mut set_str = size.to_string();
+            set_str.push_str("\r\n");
+            for item in set {
+                let set_val = serialize(&item);
+                set_str.push_str(&set_val);
+            }
+            set_str
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 fn serialize_push(data: &StoredType) -> String {
-    "".to_string()
+    let mut serialized = ">".to_string();
+    let val = match data {
+        StoredType::Push(size, push) => {
+            let mut push_str = size.to_string();
+            push_str.push_str("\r\n");
+            for item in push {
+                let push_val = serialize(&item);
+                push_str.push_str(&push_val);
+            }
+            push_str
+        }
+        _ => "".to_string(),
+    };
+    serialized.push_str(&val);
+    serialized
 }
 
 #[allow(dead_code)]
 pub fn deserialize(data: &str) -> (usize, StoredType) {
     let characters: Vec<char> = data.chars().collect();
     let char_type = characters.get(0).unwrap();
-
-    //println!("[DEBUG] deserialize: {:?}", data);
 
     let result = match char_type {
         '+' => handle_simple_string(characters),
@@ -242,12 +266,10 @@ pub fn deserialize(data: &str) -> (usize, StoredType) {
         _ => handle_simple_errors(characters),
     };
 
-    //println!("result: {:?}", result);
     (result.0, result.1)
 }
 
 fn handle_simple_string(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle simple string: {:?}", chars);
     let mut result = String::from("");
     let mut i = 1;
     while *chars.get(i).unwrap() != '\r' {
@@ -258,7 +280,6 @@ fn handle_simple_string(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_simple_errors(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle simple error: {:?}", chars);
     let mut result = String::from("");
     let mut i = 1;
     while *chars.get(i).unwrap() != '\r' {
@@ -269,7 +290,6 @@ fn handle_simple_errors(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_integer(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle integer: {:?}", chars);
     let mut number = String::from("");
     let mut i = 1;
     // handle optional sign of number
@@ -290,7 +310,6 @@ fn handle_integer(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_bulk_string(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle bulk string: {:?}", chars);
     let mut length = String::from("");
     let mut i = 1;
     if *chars.get(i).unwrap() == '-' {
@@ -313,7 +332,6 @@ fn handle_bulk_string(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_array(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle array: {:?}", chars);
     let mut array: Vec<StoredType> = Vec::new();
     let split_chars: String = chars.into_iter().collect();
     if split_chars == "*-1\r\n" {
@@ -350,12 +368,10 @@ fn handle_array(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_null(_chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle null: {:?}", chars);
     (3, StoredType::Null)
 }
 
 fn handle_boolean(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle boolean: {:?}", chars);
     let boolean = *chars.get(1).unwrap(); // #<t|f>\r\n
     match boolean {
         't' => (4, StoredType::Boolean(true)),
@@ -365,7 +381,6 @@ fn handle_boolean(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("\n\n[DEBUG] handle double: {:?}", chars);
     let mut number = String::from("");
     let mut i = 1;
     // handle optional sign of number
@@ -436,7 +451,6 @@ fn handle_double(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_big_number(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle big number: {:?}", chars);
     let mut number = String::from("");
     let mut i = 1;
     let mut skipped = 3; // count skipped chars - leader, ending 2
@@ -457,7 +471,6 @@ fn handle_big_number(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_bulk_error(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle bulk error: {:?}", chars);
     let mut length = String::from("");
     let mut i = 1;
     while *chars.get(i).unwrap() != '\r' {
@@ -478,7 +491,6 @@ fn handle_bulk_error(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_verbatim_string(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle verbatim string: {:?}", chars);
     let mut length = String::from("");
     let mut i = 1;
     while *chars.get(i).unwrap() != '\r' {
@@ -507,7 +519,6 @@ fn handle_verbatim_string(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_map(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle map: {:?}", chars);
     let mut value_map = HashMap::new();
     let split_chars: String = (&chars).into_iter().collect();
 
@@ -538,7 +549,6 @@ fn handle_map(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_set(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle set: {:?}", chars);
     let mut set: HashSet<StoredType> = HashSet::new();
     let split_chars: String = (&chars).into_iter().collect();
 
@@ -563,7 +573,6 @@ fn handle_set(chars: Vec<char>) -> (usize, StoredType) {
 }
 
 fn handle_push(chars: Vec<char>) -> (usize, StoredType) {
-    //println!("[DEBUG] handle push: {:?}", chars);
     let mut push_vec: Vec<StoredType> = Vec::new();
     let mut char_len = 1;
     let mut len_str = String::from("");

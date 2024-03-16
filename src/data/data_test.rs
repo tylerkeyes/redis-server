@@ -1,4 +1,3 @@
-/*
 #[cfg(test)]
 mod deserialize_tests {
 
@@ -302,12 +301,11 @@ mod deserialize_tests {
         }
     }
 }
-*/
 
 #[cfg(test)]
 mod serialize_tests {
 
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
 
     use crate::data::{data::serialize, types::StoredType};
 
@@ -556,5 +554,35 @@ mod serialize_tests {
         {
             assert!(false);
         }
+    }
+
+    // set tests
+    #[test]
+    fn serialize_set() {
+        let mut set = HashSet::new();
+        set.insert(StoredType::Integer(10));
+        set.insert(StoredType::SimpleString("setstring".to_string()));
+        let stored = StoredType::Set(2, set);
+        let serialized = serialize(&stored);
+        // hashmap is unordered, need to check both possibilities
+        if "~2\r\n:10\r\n+setstring\r\n" != serialized
+            && "~2\r\n+setstring\r\n:10\r\n" != serialized
+        {
+            assert!(false);
+        }
+    }
+
+    // push tests
+    #[test]
+    fn serialize_push() {
+        let stored = StoredType::Push(
+            2,
+            vec![
+                StoredType::BulkString(5, "hello".to_string()),
+                StoredType::BulkString(5, "world".to_string()),
+            ],
+        );
+        let serialized = serialize(&stored);
+        assert_eq!(">2\r\n$5\r\nhello\r\n$5\r\nworld\r\n", serialized);
     }
 }
